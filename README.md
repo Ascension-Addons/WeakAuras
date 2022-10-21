@@ -1,3 +1,3 @@
-# Addon Name
+# WeakAuras
 
-This is the repository for <Addon Name>. Modified for Ascension.gg. 
+This is the repository for WeakAuras. Modified for Ascension.gg. 
