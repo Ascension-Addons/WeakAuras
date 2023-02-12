@@ -197,7 +197,7 @@ function ConstructTest(trigger, arg)
       test = TestForMultiSelect(trigger, arg);
     elseif(arg.type == "toggle") then
       test = TestForToggle(trigger, arg);
-    elseif (arg.type == "spell") then
+    elseif (arg.type == "spell" or arg.type == "talent" or arg.type == "mysticenchant") then
       if arg.test then
         if arg.showExactOption then
           test = "("..arg.test:format(trigger[name], tostring(trigger["use_exact_" .. name]) or "false") ..")";

@@ -828,6 +828,11 @@ for i, class in ipairs(CLASS_SORT_ORDER) do
   WeakAuras.class_types[class] = string.format("|c%s%s|r", WA_GetClassColor(class), LOCALIZED_CLASS_NAMES_MALE[class])
 end
 
+WeakAuras.specialization_types = {}
+for i = 1, #SPEC_SWAP_SPELLS do
+  WeakAuras.specialization_types[i] = L["Talent Specialization"] .. " " .. i
+end
+
 Private.faction_group = {
   Alliance = L["Alliance"],
   Horde = L["Horde"],
@@ -1907,10 +1912,19 @@ Private.group_types = {
   raid = L["In Raid"]
 }
 
+Private.ruleset_types = {
+  one = L["None"],
+  pve = NO_RISK_PVE,
+  pvp = NO_RISK_PVP,
+  highrisk = HIGH_RISK_PVP,
+}
+
 Private.difficulty_types = {
   none = L["None"],
   normal = PLAYER_DIFFICULTY1,
-  heroic = PLAYER_DIFFICULTY2
+  heroic = PLAYER_DIFFICULTY2,
+  mythic = "Mythic",
+  ascended = "Ascended",
 }
 
 Private.classification_types = {

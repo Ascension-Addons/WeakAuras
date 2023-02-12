@@ -8,7 +8,6 @@ WeakAuras.halfWidth = WeakAuras.normalWidth / 2
 WeakAuras.doubleWidth = WeakAuras.normalWidth * 2
 
 local versionStringFromToc = GetAddOnMetadata("WeakAuras", "Version")
-local versionString = "4.0.0"
 local buildTime = "20201210233053"
 
 WeakAuras.versionString = versionStringFromToc
@@ -26,10 +25,6 @@ end
 
 WeakAuras.prettyPrint = function(...)
   print("|cff9900ffWeakAuras:|r ", ...)
-end
-
-if versionString ~= versionStringFromToc and versionStringFromToc ~= "Dev" then
-  WeakAuras.prettyPrint("You need to restart your game client to complete the WeakAuras update!")
 end
 
 -- Force enable WeakAurasCompanion and Archive because some addon managers interfere with it
