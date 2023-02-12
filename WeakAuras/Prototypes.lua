@@ -709,48 +709,69 @@ function WeakAuras.IsSpellKnownIncludingPet(spell)
   end
 end
 
-local function valuesForTalentFunction(trigger)
-  return function()
-    local single_class;
-    -- First check to use if the class load is on multi-select with only one class selected
-    if(trigger.use_class == false and trigger.class and trigger.class.multi) then
-      local num_classes = 0;
-      for class in pairs(trigger.class.multi) do
-        single_class = class;
-        num_classes = num_classes + 1;
-      end
-      if(num_classes ~= 1) then
-        single_class = nil;
-      end
-    end
-    -- If that is not the case, see if it is on single-select
-    if((not single_class) and trigger.use_class and trigger.class and trigger.class.single) then
-      single_class = trigger.class.single
-    end
+function WeakAuras.IsTalentKnownForLoad(spell, exact)
+  local result = WeakAuras.IsTalentKnown(spell)
+  if exact or result then
+    return result
+  end
 
-    if (trigger.use_class == nil) then -- no class selected, fallback to current class
-      single_class = select(2, UnitClass("player"));
-    end
+  if not CAO_Known then return false end
+    
+  -- search through known spells to see if we have this talent
+  local spellName = GetSpellInfo(spell)
+  if (GetSpellInfo(spellName)) then -- talent ability
+    return WeakAuras.IsSpellKnown(spell)
+  end
 
-    -- If a single specific class was found, load the specific list for it
-    if single_class and Private.talents_ids[single_class] then
-      if not Private.talent_types_specific[single_class] then
-        Private.talent_types_specific[single_class] = {}
-        for tab = 1, #Private.talents_ids[single_class] do
-          for num_talent = 1, #Private.talents_ids[single_class][tab] do
-            local spellName, _, spellIcon = GetSpellInfo(Private.talents_ids[single_class][tab][num_talent])
-            local talentId = (tab - 1) * MAX_NUM_TALENTS + num_talent
-            if spellName and spellIcon then
-              Private.talent_types_specific[single_class][talentId] = ("|T%s:24|t %s"):format(spellIcon, spellName)
-            end
-          end
-        end
-      end
-      return Private.talent_types_specific[single_class];
-    else
-      return Private.talent_types;
+  if not spellName then return false end
+
+  for ID in pairs(CAO_Known) do
+    local name = GetSpellInfo(ID)
+    if name and name:upper() == spellName:upper() then
+      return true
     end
   end
+end
+
+function WeakAuras.IsTalentKnown(spell)
+  if (spell) then
+    if tonumber(spell) then
+      return CA_IsSpellKnown(spell);
+    else
+      -- name of talent zzz
+      if (GetSpellInfo(spell)) then -- maybe talent ability?
+        return true
+      end
+      for ID in pairs(CAO_Known) do
+        local name = GetSpellInfo(ID)
+        if name and name:upper() == spell:upper() then
+          return true
+        end
+      end
+    end
+  end
+  return false
+end
+
+function WeakAuras.IsSpecActive(specID)
+  specID = specID and tonumber(specID)
+  if not specID then return false end
+  return CA_GetActiveSpecId() + 1 == specID
+end
+
+function WeakAuras.IsMysticEnchantApplied(enchantID)
+  enchantID = enchantID and tonumber(enchantID)
+  if not enchantID then return false end
+  for i = INVSLOT_FIRST_EQUIPPED, INVSLOT_LAST_EQUIPPED do
+    local slotEnchantID = GetREInSlot(255, i)
+    if slotEnchantID and slotEnchantID > 0 then
+      local enchant = GetMysticEnchantInfo(slotEnchantID)
+      if enchant and enchant.spellID == enchantID then
+        return true
+      end
+    end
+  end
+  return false
 end
 
 Private.load_prototype = {
@@ -817,6 +838,15 @@ Private.load_prototype = {
       events = {"PARTY_MEMBERS_CHANGED", "RAID_ROSTER_UPDATE"}
     },
     {
+      name = "ruleset",
+      display = "PvP Ruleset",
+      type = "multiselect",
+      width = WeakAuras.normalWidth,
+      init = "arg",
+      values = "ruleset_types",
+      events = {"ZONE_CHANGED_NEW_AREA", "PLAYER_FLAGS_CHANGED"}
+    },
+    {
       name = "player",
       hidden = true,
       init = "arg",
@@ -852,34 +882,42 @@ Private.load_prototype = {
       init = "arg"
     },
     {
-      name = "talent",
+      name = "specialization",
+      display = L["Talent Specialization"],
+      type = "multiselect",
+      values = "specialization_types",
+      test = "WeakAuras.IsSpecActive(%s)",
+      init = "arg"
+    },
+    {
+      name = "talentknown",
       display = L["Talent"],
-      type = "multiselect",
-      values = valuesForTalentFunction,
-      test = "WeakAuras.CheckTalentByIndex(%d)",
-      events = {"PLAYER_TALENT_UPDATE", "SPELL_UPDATE_USABLE"}
+      type = "talent",
+      test = "WeakAuras.IsTalentKnownForLoad(%s, %s)",
+      events = {"ASCENSION_HIDDEN_SPELL_LEARNED", "ASCENSION_HIDDEN_SPELL_UNLEARNED", "SPELL_UPDATE_USABLE"},
+      showExactOption = true,
     },
     {
-      name = "talent2",
+      name = "talentknown2",
       display = L["And Talent"],
-      type = "multiselect",
-      values = valuesForTalentFunction,
-      test = "WeakAuras.CheckTalentByIndex(%d)",
+      type = "talent",
+      test = "WeakAuras.IsTalentKnownForLoad(%s, %s)",
       enable = function(trigger)
-        return trigger.use_talent ~= nil or trigger.use_talent2 ~= nil;
+        return trigger.use_talentknown or trigger.use_talentknown2;
       end,
-      events = {"PLAYER_TALENT_UPDATE", "SPELL_UPDATE_USABLE"}
+      events = {"ASCENSION_HIDDEN_SPELL_LEARNED", "ASCENSION_HIDDEN_SPELL_UNLEARNED", "SPELL_UPDATE_USABLE"},
+      showExactOption = true,
     },
     {
-      name = "talent3",
+      name = "talentknown3",
       display = L["And Talent"],
-      type = "multiselect",
-      values = valuesForTalentFunction,
-      test = "WeakAuras.CheckTalentByIndex(%d)",
+      type = "talent",
+      test = "WeakAuras.IsTalentKnownForLoad(%s, %s)",
       enable = function(trigger)
-        return (trigger.use_talent ~= nil and trigger.use_talent2 ~= nil) or trigger.use_talent3 ~= nil;
+        return (trigger.use_talentknown and trigger.use_talentknown2) or trigger.use_talentknown3;
       end,
-      events = {"PLAYER_TALENT_UPDATE", "SPELL_UPDATE_USABLE"}
+      events = {"ASCENSION_HIDDEN_SPELL_LEARNED", "ASCENSION_HIDDEN_SPELL_UNLEARNED", "SPELL_UPDATE_USABLE"},
+      showExactOption = true,
     },
     {
       name = "spellknown",
@@ -888,6 +926,14 @@ Private.load_prototype = {
       test = "WeakAuras.IsSpellKnownForLoad(%s, %s)",
       events = {"SPELLS_CHANGED"},
       showExactOption = true
+    },
+    {
+      name = "mysticenchantactive",
+      display = L["Mystic Enchant"],
+      type = "mysticenchant",
+      test = "WeakAuras.IsMysticEnchantApplied(%s)",
+      events = {"ASCENSION_CA_RE_PRESET_CHANGED", "ASCENSION_REFORGE_ENCHANT_RESULT", "PLAYER_EQUIPMENT_CHANGED", "SPELLS_CHANGED"},
+      showExactOption = true,
     },
     {
       name = "faction",
@@ -5901,6 +5947,10 @@ Private.event_prototypes = {
         tinsert(events, "PARTY_MEMBERS_CHANGED")
         tinsert(events, "RAID_ROSTER_UPDATE")
       end
+      if trigger.use_ruleset ~= nil then
+        tinsert(events, "ZONE_CHANGED_NEW_AREA")
+        tinsert(events, "PLAYER_FLAGS_CHANGED")
+      end
 
       if trigger.use_instance_size ~= nil then
         tinsert(events, "ZONE_CHANGED")
@@ -6004,6 +6054,14 @@ Private.event_prototypes = {
         values = "group_types",
         init = "WeakAuras.GroupType()",
         events = {"PARTY_MEMBERS_CHANGED", "RAID_ROSTER_UPDATE"}
+      },
+      {
+        name = "ruleset",
+        display = "PvP Ruleset",
+        type = "multiselect",
+        values = "ruleset_types",
+        init = "WeakAuras.Ruleset()",
+        events = {"ZONE_CHANGED_NEW_AREA", "PLAYER_FLAGS_CHANGED"}
       },
       {
         name = "instance_size",

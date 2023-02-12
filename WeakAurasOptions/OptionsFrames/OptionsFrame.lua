@@ -487,12 +487,7 @@ function OptionsPrivate.CreateFrame()
   addFooter(L["Find Auras"], [[Interface\AddOns\WeakAuras\Media\Textures\wagoupdate_logo.tga]], "https://wago.io",
             L["Browse Wago, the largest collection of auras."])
 
-  if not OptionsPrivate.Private.CompanionData.slugs then
-    addFooter(L["Update Auras"], [[Interface\AddOns\WeakAuras\Media\Textures\wagoupdate_refresh.tga]], "https://weakauras.wtf",
-            L["Keep your Wago imports up to date with the Companion App."])
-  end
-
-  addFooter(L["Found a Bug?"], [[Interface\AddOns\WeakAuras\Media\Textures\bug_report.tga]], "https://github.com/Bunny67/WeakAuras-WotLK/issues/new?assignees=&labels=bug&template=bug_report.md&title=",
+  addFooter(L["Found a Bug?"], [[Interface\AddOns\WeakAuras\Media\Textures\bug_report.tga]], "https://github.com/Ascension-Addons/WeakAuras/issues/new/choose",
             L["Report bugs on our issue tracker."])
 
   -- Disable for now

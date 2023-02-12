@@ -673,6 +673,8 @@ local growers = {
     end
   end,
   GRID = function(data)
+    print("GRID")
+    DumpNow(data)
     local gridType = data.gridType
     local gridWidth = data.gridWidth
     local rowSpace = data.rowSpace

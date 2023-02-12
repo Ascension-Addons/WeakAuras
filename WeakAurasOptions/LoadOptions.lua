@@ -44,8 +44,50 @@ local function CorrectSpellName(input)
       link = GetSpellLink(input);
     end
     if(link) and link ~= "" then
-      local itemId = link:match("spell:(%d+)");
-      return tonumber(itemId);
+      local spellID = link:match("spell:(%d+)");
+      return tonumber(spellID);
+    end
+  end
+end
+
+local function CorrectTalentName(input)
+  local inputId = tonumber(input);
+  if(inputId) then
+    local name = GetSpellInfo(inputId);
+    if(name) then
+      return inputId;
+    else
+      return nil;
+    end
+  elseif type(input) == "string" and input ~= "" then
+    local name
+    for ID in pairs(CAO_Known) do
+      name = GetSpellInfo(ID)
+      if name and name:upper() == input:upper() then
+        return ID
+      end
+    end
+  end
+end
+
+local function CorrectMysticEnchantName(input)
+  local inputId = tonumber(input);
+  if(inputId) then
+    local name = GetSpellInfo(inputId);
+    if(name) then
+      return inputId;
+    else
+      return nil;
+    end
+  elseif type(input) == "string" and input ~= "" then
+    local name
+    for _, enchant in pairs(MYSTIC_ENCHANTS) do
+      if enchant.spellID > 0 then
+        name = GetSpellInfo(enchant.spellID)
+        if name and name:upper() == input:upper() then
+          return enchant.spellID
+        end
+      end
     end
   end
 end
@@ -276,7 +318,7 @@ function OptionsPrivate.ConstructOptions(prototype, data, startorder, triggernum
       if(arg.type == "toggle" or arg.type == "tristate") then
         options["use_"..name].width = arg.width or WeakAuras.doubleWidth;
       end
-      if(arg.type == "spell" or arg.type == "aura" or arg.type == "item") then
+      if(arg.type == "spell" or arg.type == "aura" or arg.type == "item" or arg.type == "talent" or arg.type == "mysticenchant") then
         if not arg.showExactOption then
           options["use_"..name].width = arg.width or WeakAuras.normalWidth - 0.1;
         end
@@ -469,7 +511,7 @@ function OptionsPrivate.ConstructOptions(prototype, data, startorder, triggernum
           end
         end
         order = order + 1;
-      elseif(arg.type == "spell" or arg.type == "aura" or arg.type == "item") then
+      elseif(arg.type == "spell" or arg.type == "aura" or arg.type == "item" or arg.type == "talent" or arg.type == "mysticenchant") then
         if (arg.showExactOption) then
           options["exact"..name] = {
             type = "toggle",
@@ -501,7 +543,7 @@ function OptionsPrivate.ConstructOptions(prototype, data, startorder, triggernum
               if(arg.type == "aura") then
                 local icon = spellCache.GetIcon(trigger[realname]);
                 return icon and tostring(icon) or "", 18, 18;
-              elseif(arg.type == "spell") then
+              elseif(arg.type == "spell" or arg.type == "talent" or arg.type == "mysticenchant") then
                 local _, _, icon = GetSpellInfo(trigger[realname]);
                 return icon and tostring(icon) or "", 18, 18;
               elseif(arg.type == "item") then
@@ -512,7 +554,7 @@ function OptionsPrivate.ConstructOptions(prototype, data, startorder, triggernum
               return "", 18, 18;
             end
           end,
-          disabled = function() return not ((arg.type == "aura" and trigger[realname] and spellCache.GetIcon(trigger[realname])) or (arg.type == "spell" and trigger[realname] and GetSpellInfo(trigger[realname])) or (arg.type == "item" and trigger[realname] and GetItemIcon(trigger[realname]))) end
+          disabled = function() return not ((arg.type == "aura" and trigger[realname] and spellCache.GetIcon(trigger[realname])) or ((arg.type == "spell" or arg.type == "talent" or arg.type == "mysticenchant") and trigger[realname] and GetSpellInfo(trigger[realname])) or (arg.type == "item" and trigger[realname] and GetItemIcon(trigger[realname]))) end
         };
         order = order + 1;
         options[name] = {
@@ -559,6 +601,52 @@ function OptionsPrivate.ConstructOptions(prototype, data, startorder, triggernum
               else
                 return nil;
               end
+            elseif(arg.type == "talent") then
+              local useExactSpellId = (arg.showExactOption and trigger["use_exact_"..realname])
+              if(trigger["use_"..realname]) then
+                if (trigger[realname] and trigger[realname] ~= "") then
+                  if useExactSpellId then
+                    local spellId = tonumber(trigger[realname])
+                    if (spellId and spellId ~= 0) then
+                      return tostring(spellId);
+                    end
+                  else
+                    local name = GetSpellInfo(trigger[realname]);
+                    if(name) then
+                      return name;
+                    end
+                    for ID in pairs(CAO_Known) do
+                      name = GetSpellInfo(ID)
+                      if name and name:upper() == trigger[realname]:upper() then
+                        return name
+                      end
+                    end
+                  end
+                end
+                return useExactSpellId and L["Invalid Spell ID"] or L["Invalid Spell Name/ID/Link"];
+              else
+                return nil;
+              end
+            elseif(arg.type == "mysticenchant") then
+              if(trigger["use_"..realname]) then
+                if (trigger[realname] and trigger[realname] ~= "") then
+                  local name = GetSpellInfo(trigger[realname]);
+                  if(name) then
+                    return name;
+                  end
+                  for enchant in pairs(MYSTIC_ENCHANTS) do
+                    if enchant.spellID > 0 then
+                      name = GetSpellInfo(enchant.spellID)
+                      if name and name:upper() == trigger[realname]:upper() then
+                        return name
+                      end
+                    end
+                  end
+                end
+                return L["Invalid Spell Name/ID/Link"];
+              else
+                return nil;
+              end
             else
               return trigger["use_"..realname] and trigger[realname] or nil;
             end
@@ -569,6 +657,10 @@ function OptionsPrivate.ConstructOptions(prototype, data, startorder, triggernum
               fixedInput = WeakAuras.spellCache.CorrectAuraName(v);
             elseif(arg.type == "spell") then
               fixedInput = CorrectSpellName(v);
+            elseif(arg.type == "talent") then
+              fixedInput = CorrectTalentName(v);
+            elseif(arg.type == "mysticenchant") then
+              fixedInput = CorrectMysticEnchantName(v);
             elseif(arg.type == "item") then
               fixedInput = CorrectItemName(v);
             end

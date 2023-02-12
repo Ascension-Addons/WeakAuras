@@ -543,6 +543,7 @@ local function ConstructFunction(prototype, trigger, skipOptional)
   local tests = {};
   local debug = {};
   local events = {}
+  local custom_events = {}
   local init;
   local preambles = ""
   if(prototype.init) then
@@ -640,7 +641,7 @@ local function ConstructFunction(prototype, trigger, skipOptional)
                 test = name;
               end
             end
-          elseif (arg.type == "spell") then
+          elseif (arg.type == "spell" or arg.type == "talent" or arg.type == "mysticenchant") then
             if arg.showExactOption then
               test = "("..arg.test:format(trigger[name], tostring(trigger["use_exact_" .. name]) or "false") ..")";
             else
@@ -702,7 +703,7 @@ local function ConstructFunction(prototype, trigger, skipOptional)
   end
   ret = ret.."return true else return false end end";
 
-  return ret, events;
+  return ret, events, custom_events;
 end
 
 function WeakAuras.GetActiveConditions(id, cloneId)
@@ -1176,6 +1177,20 @@ function WeakAuras.GroupType()
   return "solo";
 end
 
+function WeakAuras.Ruleset()
+  local ruleset = C_Player:GetRuleset()
+  if ruleset == Enum.Ruleset.NoRiskPvE then
+    return "pve"
+  end
+  if ruleset == Enum.Ruleset.NoRiskPvP then
+    return "pvp"
+  end
+  if ruleset == Enum.Ruleset.HighRiskPvP then
+    return "highrisk"
+  end
+  return "none"
+end
+
 local function GetInstanceTypeAndSize()
   local size, difficulty
   local inInstance, Type = IsInInstance()
@@ -1201,10 +1216,14 @@ local function GetInstanceTypeAndSize()
         difficulty = "heroic"
       end
     else
-      if difficultyIndex == 1 or difficultyIndex == 2 then
+      if difficultyIndex == 1 then
         difficulty = "normal"
-      elseif difficultyIndex == 3 or difficultyIndex == 4 then
+      elseif difficultyIndex == 2 then
         difficulty = "heroic"
+      elseif difficultyIndex == 3 then
+        difficulty = "mythic"
+      elseif difficultyIndex == 4 then
+        difficulty = "ascended"
       end
     end
     return size, difficulty, instanceType, ZoneMapID
@@ -1223,6 +1242,11 @@ end
 local toLoad = {}
 local toUnload = {};
 local function scanForLoadsImpl(toCheck, event, arg1, ...)
+  if event == "COMMENTATOR_SKIRMISH_QUEUE_REQUEST" then
+    scanForLoadsImpl(toCheck, arg1, ...)
+    return
+  end
+
   if (Private.IsOptionsProcessingPaused()) then
     return;
   end
@@ -1251,6 +1275,7 @@ local function scanForLoadsImpl(toCheck, event, arg1, ...)
 
   local size, difficulty, instanceType = GetInstanceTypeAndSize()
   local group = WeakAuras.GroupType()
+  local ruleset = WeakAuras.Ruleset()
 
   local changed = 0;
   local shouldBeLoaded, couldBeLoaded;
@@ -1263,8 +1288,8 @@ local function scanForLoadsImpl(toCheck, event, arg1, ...)
     if (data and not data.controlledChildren) then
       local loadFunc = loadFuncs[id];
       local loadOpt = loadFuncsForOptions[id];
-      shouldBeLoaded = loadFunc and loadFunc("ScanForLoads_Auras", inCombat, alive, pvp, vehicle, vehicleUi, group, player, realm, class, faction, playerLevel, zone, zoneId, size, difficulty);
-      couldBeLoaded =  loadOpt and loadOpt("ScanForLoads_Auras",   inCombat, alive, pvp, vehicle, vehicleUi, group, player, realm, class, faction, playerLevel, zone, zoneId, size, difficulty);
+      shouldBeLoaded = loadFunc and loadFunc("ScanForLoads_Auras", inCombat, alive, pvp, vehicle, vehicleUi, group, ruleset, player, realm, class, faction, playerLevel, zone, zoneId, size, difficulty);
+      couldBeLoaded =  loadOpt and loadOpt("ScanForLoads_Auras",   inCombat, alive, pvp, vehicle, vehicleUi, group, ruleset, player, realm, class, faction, playerLevel, zone, zoneId, size, difficulty);
 
       if(shouldBeLoaded and not loaded[id]) then
         changed = changed + 1;
@@ -1337,6 +1362,7 @@ local loadFrame = CreateFrame("FRAME");
 WeakAuras.loadFrame = loadFrame;
 WeakAuras.frames["Display Load Handling"] = loadFrame;
 
+loadFrame:RegisterEvent("COMMENTATOR_SKIRMISH_QUEUE_REQUEST")
 loadFrame:RegisterEvent("PLAYER_TALENT_UPDATE");
 loadFrame:RegisterEvent("SPELL_UPDATE_USABLE");
 loadFrame:RegisterEvent("PLAYER_DIFFICULTY_CHANGED");
