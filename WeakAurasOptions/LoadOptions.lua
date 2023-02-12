@@ -60,6 +60,16 @@ local function CorrectTalentName(input)
       return nil;
     end
   elseif type(input) == "string" and input ~= "" then
+    local link;
+    if(input:sub(1,1) == "\124") then
+      link = input;
+    else
+      link = GetSpellLink(input);
+    end
+    if(link) and link ~= "" then
+      local spellID = link:match("spell:(%d+)");
+      return tonumber(spellID);
+    end
     local name
     for ID in pairs(CAO_Known) do
       name = GetSpellInfo(ID)
@@ -80,6 +90,16 @@ local function CorrectMysticEnchantName(input)
       return nil;
     end
   elseif type(input) == "string" and input ~= "" then
+    local link;
+    if(input:sub(1,1) == "\124") then
+      link = input;
+    else
+      link = GetSpellLink(input);
+    end
+    if(link) and link ~= "" then
+      local spellID = link:match("spell:(%d+)");
+      return tonumber(spellID);
+    end
     local name
     for _, enchant in pairs(MYSTIC_ENCHANTS) do
       if enchant.spellID > 0 then
