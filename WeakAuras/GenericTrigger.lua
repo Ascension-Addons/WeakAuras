@@ -1433,9 +1433,9 @@ do
       update_frame = CreateFrame("FRAME");
     end
     if not(updating) then
-      update_frame:SetScript("OnUpdate", function()
+      update_frame:SetScript("OnUpdate", function(self, elapsed)
         if not(WeakAuras.IsPaused()) then
-          WeakAuras.ScanEvents("FRAME_UPDATE");
+          WeakAuras.ScanEvents("FRAME_UPDATE", elapsed);
         end
       end);
       updating = true;
