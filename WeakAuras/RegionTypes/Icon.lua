@@ -584,7 +584,7 @@ local function modify(parent, region, data)
     end
 
     function region:PreShow()
-      if (cooldown.duration and cooldown.duration > 0.01) then
+      if (cooldown.duration and cooldown.duration > 0.01 and cooldown.expirationTime) then
         cooldown:Show();
         cooldown:SetCooldown(cooldown.expirationTime - cooldown.duration, cooldown.duration);
         cooldown:Resume()
