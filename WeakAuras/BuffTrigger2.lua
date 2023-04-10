@@ -140,7 +140,7 @@ end
 
 local function IsGroupTrigger(trigger)
   return trigger.unit == "group" or trigger.unit == "party" or trigger.unit == "raid"
-         or trigger.unit == "boss" or trigger.unit == "arena" or trigger.unit == "multi"
+         or trigger.unit == "boss" or trigger.unit == "nameplate" or trigger.unit == "arena" or trigger.unit == "multi"
 end
 
 local function IsSingleMissing(trigger)
@@ -944,13 +944,15 @@ local function GetAllUnits(unit, allUnits, includePets)
         i = 0
       end
     end
-  elseif unit == "boss" or unit == "arena" then
+  elseif unit == "boss" or unit == "arena" or unit == "nameplate" then
     local i = 1
     local max
     if unit == "boss" then
       max = MAX_BOSS_FRAMES
     elseif unit == "arena" then
       max = 5
+    elseif unit == "nameplate" then
+      max = 40
     else
       return function() end
     end
@@ -1562,6 +1564,12 @@ local function ScanUnit(time, arg1)
   elseif Private.multiUnitUnits.arena[arg1] then
     ScanGroupUnit(time, matchDataChanged, "arena", arg1)
   else
+    if arg1 ~= "player" then
+      local nameplate = GetNamePlateForUnit(arg1)
+      if nameplate and nameplate._unit then
+        ScanGroupUnit(time, matchDataChanged, "nameplate", nameplate._unit)
+      end
+    end
     ScanGroupUnit(time, matchDataChanged, nil, arg1)
   end
 end
@@ -1700,6 +1708,11 @@ local function EventHandler(frame, event, arg1, arg2, ...)
         tinsert(unitsToRemove, pet)
       end
     end
+  elseif event == "NAME_PLATE_UNIT_ADDED" then
+    RecheckActiveForUnitType("nameplate", arg1, deactivatedTriggerInfos)
+  elseif event == "NAME_PLATE_UNIT_REMOVED" then
+    RecheckActiveForUnitType("nameplate", arg1, deactivatedTriggerInfos)
+    tinsert(unitsToRemove, arg1)
   elseif event == "INSTANCE_ENCOUNTER_ENGAGE_UNIT" then
     for unit in GetAllUnits("boss", true) do
       RecheckActiveForUnitType("boss", unit, deactivatedTriggerInfos)
@@ -1768,6 +1781,12 @@ frame:RegisterEvent("PARTY_MEMBERS_CHANGED")
 frame:RegisterEvent("RAID_ROSTER_UPDATE")
 frame:RegisterEvent("INSTANCE_ENCOUNTER_ENGAGE_UNIT")
 frame:RegisterEvent("PLAYER_ENTERING_WORLD")
+frame:HookEvent("NAME_PLATE_UNIT_ADDED", function(unit)
+  EventHandler(frame, "NAME_PLATE_UNIT_ADDED", unit)
+end)
+frame:HookEvent("NAME_PLATE_UNIT_REMOVED", function(unit)
+  EventHandler(frame, "NAME_PLATE_UNIT_REMOVED", unit)
+end)
 frame:SetScript("OnEvent", EventHandler)
 
 frame:SetScript("OnUpdate", function()
@@ -2331,7 +2350,7 @@ function BuffTrigger.Add(data)
       end
 
       local groupTrigger = trigger.unit == "group" or trigger.unit == "raid" or trigger.unit == "party"
-      local effectiveIgnoreSelf = groupTrigger and trigger.ignoreSelf
+      local effectiveIgnoreSelf = (groupTrigger or trigger.unit == "nameplate") and trigger.ignoreSelf
       local effectiveClass = groupTrigger and trigger.useClass and trigger.class
       local effectiveIgnoreDead = groupTrigger and trigger.ignoreDead
       local effectiveIgnoreDisconnected = groupTrigger and trigger.ignoreDisconnected
@@ -2865,6 +2884,9 @@ local function TrackUid(unit)
   else
     ReleaseUID(unit)
   end
+
+  if unit:sub(1, 9) == "nameplate" then return end -- nameplate doesnt support target
+
   unit = unit.."target"
   GUID = UnitGUID(unit)
   if GUID then
@@ -3112,13 +3134,19 @@ end
 local function HandleCombatLog(scanFuncsName, scanFuncsSpellId, filter, event, sourceGUID, sourceName, destGUID, destName, spellId, spellName, amount)
   local time = GetTime()
   local unit = GetUnit(destGUID)
+  if unit and unit:sub(1, 9) == "nameplate" then
+    ScanGroupUnit(time, matchDataChanged, "nameplate", unit)
+    return
+  end
   if scanFuncsName and scanFuncsName[spellName] or scanFuncsSpellId and scanFuncsSpellId[spellId] then
     ScheduleMultiCleanUp(destGUID, time + 60)
     matchDataMulti[destGUID] = matchDataMulti[destGUID] or {}
 
     if scanFuncsSpellId and scanFuncsSpellId[spellId] then
+      dprint("Scan SpellID")
       local updatedSpellId = UpdateMatchDataMulti(time, matchDataMulti[destGUID], spellId, event, sourceGUID, sourceName, destGUID, destName, spellId, spellName, amount)
       if unit then
+        dprint("Update Unit Spell ID", unit)
         updatedSpellId = AugmentMatchDataMulti(matchDataMulti[destGUID][spellId][sourceGUID], unit, filter, sourceGUID, nil, spellId) or updatedSpellId
       else
         pendingTracks[destGUID] = true
@@ -3133,8 +3161,10 @@ local function HandleCombatLog(scanFuncsName, scanFuncsSpellId, filter, event, s
     end
 
     if scanFuncsName and scanFuncsName[spellName] then
+      dprint("Scan SpellName")
       local updatedName = UpdateMatchDataMulti(time, matchDataMulti[destGUID], spellName, event, sourceGUID, sourceName, destGUID, destName, spellId, spellName, amount)
       if unit then
+        dprint("Update Unit Spell Name", unit)
         updatedName = AugmentMatchDataMulti(matchDataMulti[destGUID][spellName][sourceGUID], unit, filter, sourceGUID, spellName, nil) or updatedName
       else
         pendingTracks[destGUID] = true
@@ -3151,6 +3181,11 @@ local function HandleCombatLog(scanFuncsName, scanFuncsSpellId, filter, event, s
 end
 
 local function HandleCombatLogRemove(scanFuncsName, scanFuncsSpellId, sourceGUID, destGUID, spellId, spellName)
+  local unit = GetUnit(destGUID)
+  if unit and unit:sub(1, 9) == "nameplate" then
+    ScanGroupUnit(GetTime(), matchDataChanged, "nameplate", unit)
+    return
+  end
   if scanFuncsName and scanFuncsName[spellName] or scanFuncsSpellId and scanFuncsSpellId[spellId] then
     if matchDataMulti[destGUID] then
       RemoveMatchDataMulti(matchDataMulti[destGUID], destGUID, spellId, sourceGUID)
@@ -3233,8 +3268,14 @@ function BuffTrigger.InitMultiAura()
     multiAuraFrame:RegisterEvent("UNIT_TARGET")
     multiAuraFrame:RegisterEvent("UNIT_AURA")
     multiAuraFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
-	multiAuraFrame:RegisterEvent("PLAYER_FOCUS_CHANGED")
+	  multiAuraFrame:RegisterEvent("PLAYER_FOCUS_CHANGED")
     multiAuraFrame:RegisterEvent("PLAYER_LEAVING_WORLD")
+    multiAuraFrame:HookEvent("NAME_PLATE_UNIT_ADDED", function(unit)
+      BuffTrigger.HandleMultiEvent(multiAuraFrame, "NAME_PLATE_UNIT_ADDED", unit)
+    end)
+    multiAuraFrame:HookEvent("NAME_PLATE_UNIT_REMOVED", function(unit)
+      BuffTrigger.HandleMultiEvent(multiAuraFrame, "NAME_PLATE_UNIT_REMOVED", unit)
+    end)
     multiAuraFrame:SetScript("OnEvent", BuffTrigger.HandleMultiEvent)
     WeakAuras.frames["Multi-target 2 Aura Trigger Handler"] = multiAuraFrame
   end
@@ -3250,6 +3291,10 @@ function BuffTrigger.HandleMultiEvent(frame, event, ...)
     TrackUid("target")
   elseif event == "PLAYER_FOCUS_CHANGED" then
     TrackUid("focus")
+  elseif event == "NAME_PLATE_UNIT_ADDED" then
+    TrackUid(...)
+  elseif event == "NAME_PLATE_UNIT_REMOVED" then
+    ReleaseUID(...)
   elseif event == "UNIT_AURA" then
     local unit = ...
     if not unit then return end

@@ -255,13 +255,17 @@ function OptionsPrivate.GetActionOptions(data)
         type = "select",
         width = WeakAuras.normalWidth,
         desc = function()
-          return data.actions.start.glow_frame_type == "UNITFRAME"
+          return (
+            data.actions.start.glow_frame_type == "UNITFRAME"
+            or data.actions.start.glow_frame_type == "NAMEPLATE"
+          )
           and L["Require unit from trigger"] or nil
         end,
         name = L["Glow Frame Type"],
         order = 10.3,
         values = {
           UNITFRAME = L["Unit Frame"],
+          NAMEPLATE = L["Nameplate"],
           FRAMESELECTOR = L["Frame Selector"]
         },
         hidden = function()
@@ -629,13 +633,17 @@ function OptionsPrivate.GetActionOptions(data)
         type = "select",
         width = WeakAuras.normalWidth,
         desc = function()
-          return data.actions.finish.glow_frame_type == "UNITFRAME"
+          return (
+            data.actions.finish.glow_frame_type == "UNITFRAME"
+            or data.actions.finish.glow_frame_type == "NAMEPLATE"
+          )
           and L["Require unit from trigger"] or nil
         end,
         name = L["Glow Frame Type"],
         order = 30.3,
         values = {
           UNITFRAME = L["Unit Frame"],
+          NAMEPLATE = L["Nameplate"],
           FRAMESELECTOR = L["Frame Selector"]
         },
         hidden = function()
