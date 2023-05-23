@@ -79,6 +79,8 @@ local timers = WeakAuras.timers;
 local LoadEvent, HandleEvent, HandleUnitEvent, TestForTriState, TestForToggle, TestForLongString, TestForMultiSelect
 local ConstructTest, ConstructFunction
 
+local nameplateExists = {}
+
 function WeakAuras.UnitExistsFixed(unit, smart)
   if smart and IsInRaid() then
     if unit:sub(1, 5) == "party" or unit == "player" then
@@ -856,6 +858,11 @@ end
 
 function HandleEvent(frame, event, arg1, arg2, ...)
   Private.StartProfileSystem("generictrigger " .. event);
+  if event == "NAME_PLATE_UNIT_ADDED" then
+    nameplateExists[arg1] = true
+  elseif event == "NAME_PLATE_UNIT_REMOVED" then
+    nameplateExists[arg1] = false
+  end
   if not(WeakAuras.IsPaused()) then
     if(event == "COMBAT_LOG_EVENT_UNFILTERED") then
       WeakAuras.ScanEvents(event, arg1, arg2, ...);
@@ -929,6 +936,14 @@ local frame = CreateFrame("FRAME");
 frame.unitFrames = {};
 WeakAuras.frames["WeakAuras Generic Trigger Frame"] = frame;
 frame:RegisterEvent("PLAYER_ENTERING_WORLD");
+frame:HookEvent("NAME_PLATE_UNIT_ADDED", function(unit)
+  HandleEvent(frame, "NAME_PLATE_UNIT_ADDED", unit)
+end)
+frame:HookEvent("NAME_PLATE_UNIT_REMOVED", function(unit)
+  HandleEvent(frame, "NAME_PLATE_UNIT_REMOVED", unit)
+end)
+genericTriggerRegisteredEvents["NAME_PLATE_UNIT_ADDED"] = true
+genericTriggerRegisteredEvents["NAME_PLATE_UNIT_REMOVED"] = true
 genericTriggerRegisteredEvents["PLAYER_ENTERING_WORLD"] = true;
 frame:SetScript("OnEvent", HandleEvent);
 
@@ -970,6 +985,10 @@ local function MultiUnitLoop(Func, unit, includePets, ...)
     end
   elseif unit == "arena" then
     for i = 1, 5 do
+      Func(unit..i, ...)
+    end
+  elseif unit == "nameplate" then
+    for i = 1, 40 do
       Func(unit..i, ...)
     end
   elseif unit == "group" then
@@ -2497,6 +2516,7 @@ function WeakAuras.WatchUnitChange(unit)
     watchUnitChange.unitChangeGUIDS = {}
     watchUnitChange.unitRoles = {}
     watchUnitChange.inRaid = IsInRaid()
+    watchUnitChange.nameplateFaction = {}
     watchUnitChange.raidmark = {}
 
     WeakAuras.frames["Unit Change Frame"] = watchUnitChange;
@@ -2506,13 +2526,30 @@ function WeakAuras.WatchUnitChange(unit)
     watchUnitChange:RegisterEvent("INSTANCE_ENCOUNTER_ENGAGE_UNIT");
     watchUnitChange:RegisterEvent("PARTY_MEMBERS_CHANGED");
     watchUnitChange:RegisterEvent("RAID_ROSTER_UPDATE");
+    watchUnitChange:HookEvent("NAME_PLATE_UNIT_ADDED", function(unit)
+      watchUnitChange:GetScript("OnEvent")(watchUnitChange, "NAME_PLATE_UNIT_ADDED", unit)
+    end)
+    watchUnitChange:HookEvent("NAME_PLATE_UNIT_REMOVED", function(unit)
+      watchUnitChange:GetScript("OnEvent")(watchUnitChange, "NAME_PLATE_UNIT_REMOVED", unit)
+    end)
     watchUnitChange:RegisterEvent("PLAYER_ENTERING_WORLD")
     watchUnitChange:RegisterEvent("UNIT_PET")
     watchUnitChange:RegisterEvent("RAID_TARGET_UPDATE")
 
     watchUnitChange:SetScript("OnEvent", function(self, event, unit)
       Private.StartProfileSystem("generictrigger unit change");
-      if event == "UNIT_PET" then
+      if event == "NAME_PLATE_UNIT_ADDED" or event == "NAME_PLATE_UNIT_REMOVED" then
+        local newGuid = WeakAuras.UnitExistsFixed(unit) and UnitGUID(unit) or ""
+        local newMarker = GetRaidTargetIndex(unit) or 0
+        if newGuid ~= watchUnitChange.unitChangeGUIDS[unit] then
+          WeakAuras.ScanEvents("UNIT_CHANGED_" .. unit, unit)
+          watchUnitChange.unitChangeGUIDS[unit] = newGuid
+          watchUnitChange.raidmark[unit] = newMarker
+        end
+        if event == "NAME_PLATE_UNIT_ADDED" then
+          watchUnitChange.nameplateFaction[unit] = WeakAuras.GetPlayerReaction(unit)
+        end
+      elseif event == "UNIT_PET" then
         local pet = WeakAuras.unitToPetUnit[unit]
         if pet then
           WeakAuras.ScanEvents("UNIT_CHANGED_" .. pet, pet)
@@ -3218,89 +3255,6 @@ do
     end
     playerMovingFrame.speed = GetUnitSpeed("player")
     playerMovingFrame:SetScript("OnUpdate", PlayerMoveSpeedUpdate)
-  end
-end
-
--- Nameplates
-do
-  local watchNameplates
-
-  local select = select
-  local gsub = string.gsub
-
-  local WorldFrame = WorldFrame
-  local WorldGetChildren = WorldFrame.GetChildren
-  local WorldGetNumChildren = WorldFrame.GetNumChildren
-
-  local lastUpdate = 0
-  local lastChildern, numChildren = 0, 0
-  local nameplateList = {}
-  local visibleNameplates = {}
-
-  local OVERLAY = [=[Interface\TargetingFrame\UI-TargetingFrame-Flash]=]
-  local FSPAT = "%s*"..(gsub(gsub(FOREIGN_SERVER_LABEL, "^%s", ""), "[%*()]", "%%%1")).."$"
-
-  local function nameplateShow(self)
-    Private.StartProfileSystem("nameplatetrigger")
-    local name = gsub(self.nameText:GetText() or "", FSPAT, "")
-    visibleNameplates[self] = name
-    WeakAuras.ScanEvents("NP_SHOW", self, name)
-	Private.StopProfileSystem("nameplatetrigger")
-  end
-
-  local function nameplateHide(self)
-    Private.StartProfileSystem("nameplatetrigger")
-    visibleNameplates[self] = nil
-    WeakAuras.ScanEvents("NP_HIDE", self, gsub(self.nameText:GetText() or "", FSPAT, ""))
-    Private.StopProfileSystem("nameplatetrigger")
-  end
-
-  local function findNewPlate(...)
-    for i = lastChildern + 1, numChildren do
-      local frame = select(i, ...)
-      local region, _, _, _, _, _, nameText = frame:GetRegions()
-      if (frame.UnitFrame or (region and region:GetObjectType() == "Texture" and region:GetTexture() == OVERLAY)) and not nameplateList[frame] then
-        frame.nameText = nameText
-        frame:HookScript("OnShow", nameplateShow)
-        frame:HookScript("OnHide", nameplateHide)
-        nameplateShow(frame)
-        nameplateList[frame] = true
-      end
-    end
-  end
-
-  local function nameplatesUpdate(_, elaps)
-    lastUpdate = lastUpdate + elaps
-    if lastUpdate < 1 then return end
-    numChildren = WorldGetNumChildren(WorldFrame)
-    if lastChildern ~= numChildren then
-      Private.StartProfileSystem("nameplatetrigger")
-      findNewPlate(WorldGetChildren(WorldFrame))
-      Private.StopProfileSystem("nameplatetrigger")
-      lastChildern = numChildren
-    end
-    lastUpdate = 0
-  end
-
-  local resultNameplates = {}
-  function WeakAuras.GetUnitNameplate(name, results)
-    if not name or name == "" then return end
-    results = results or resultNameplates
-    wipe(results)
-    for frame, nameplateName in pairs(visibleNameplates) do
-      if name == nameplateName then
-        results[#results + 1] = frame
-      end
-    end
-    return results[1], results
-  end
-
-  function WeakAuras.WatchNamePlates()
-    if not(watchNameplates) then
-      watchNameplates = CreateFrame("Frame")
-      WeakAuras.frames["Watch NamePlates Frames"] = watchNameplates
-    end
-    watchNameplates:SetScript("OnUpdate", nameplatesUpdate)
   end
 end
 

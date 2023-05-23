@@ -360,6 +360,20 @@ local function staggerCoefficient(alignment, stagger)
 end
 
 local anchorers = {
+  ["NAMEPLATE"] = function(data)
+    return function(frames, activeRegions)
+      for _, regionData in ipairs(activeRegions) do
+        local unit = regionData.region.state and regionData.region.state.unit
+        if unit then
+          local frame = WeakAuras.GetUnitNameplate(unit)
+          if frame then
+            frames[frame] = frames[frame] or {}
+            tinsert(frames[frame], regionData)
+          end
+        end
+      end
+    end
+  end,
   ["UNITFRAME"] = function(data)
     return function(frames, activeRegions)
       for _, regionData in ipairs(activeRegions) do

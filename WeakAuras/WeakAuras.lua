@@ -2865,7 +2865,10 @@ end
 function Private.HandleGlowAction(actions, region)
   if actions.glow_action
   and (
-    (actions.glow_frame_type == "UNITFRAME" and region.state.unit)
+    (
+      (actions.glow_frame_type == "UNITFRAME" or actions.glow_frame_type == "NAMEPLATE")
+      and region.state.unit
+    )
     or (actions.glow_frame_type == "FRAMESELECTOR" and actions.glow_frame)
   )
   then
@@ -2882,6 +2885,8 @@ function Private.HandleGlowAction(actions, region)
       end
     elseif actions.glow_frame_type == "UNITFRAME" and region.state.unit then
       glow_frame = WeakAuras.GetUnitFrame(region.state.unit)
+    elseif actions.glow_frame_type == "NAMEPLATE" and region.state.unit then
+      glow_frame = WeakAuras.GetUnitNameplate(region.state.unit)
     end
 
     if glow_frame then
@@ -4412,6 +4417,12 @@ local function GetAnchorFrame(data, region, parent)
     return mouseFrame;
   end
 
+  if (anchorFrameType == "NAMEPLATE") then
+    local unit = region.state.unit
+    local frame = unit and WeakAuras.GetUnitNameplate(unit)
+    if frame then return frame end
+  end
+
   if (anchorFrameType == "UNITFRAME") then
     local unit = region.state.unit
     if unit then
@@ -4655,6 +4666,7 @@ do
   for i = 1, 40 do
     trackableUnits["raid" .. i] = true
     trackableUnits["raidpet" .. i] = true
+    trackableUnits["nameplate" .. i] = true
   end
 
   function WeakAuras.UntrackableUnit(unit)

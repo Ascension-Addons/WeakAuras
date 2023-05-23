@@ -1704,6 +1704,18 @@ Private.event_prototypes = {
         init = "UnitIsConnected(unit)"
       },
       {
+        name = "nameplateType",
+        display = L["Nameplate Type"],
+        type = "select",
+        init = "WeakAuras.GetPlayerReaction(unit)",
+        values = "hostility_types",
+        conditionType = "select",
+        store = true,
+        enable = function(trigger)
+          return trigger.unit == "nameplate"
+        end
+      },
+      {
         name = "name",
         hidden = true,
         init = "UnitName(unit)",
@@ -1963,6 +1975,18 @@ Private.event_prototypes = {
           return trigger.unit == "group" or trigger.unit == "raid" or trigger.unit == "party"
         end,
         init = "UnitIsConnected(unit)"
+      },
+      {
+        name = "nameplateType",
+        display = L["Nameplate Type"],
+        type = "select",
+        init = "WeakAuras.GetPlayerReaction(unit)",
+        values = "hostility_types",
+        store = true,
+        conditionType = "select",
+        enable = function(trigger)
+          return trigger.unit == "nameplate"
+        end
       },
       {
         hidden = true,
@@ -5511,6 +5535,18 @@ Private.event_prototypes = {
           return trigger.unit == "group" or trigger.unit == "raid" or trigger.unit == "party"
         end,
         init = "not UnitIsUnit(\"player\", unit)"
+      },
+      {
+        name = "nameplateType",
+        display = L["Nameplate Type"],
+        type = "select",
+        init = "WeakAuras.GetPlayerReaction(unit)",
+        values = "hostility_types",
+        store = true,
+        conditionType = "select",
+        enable = function(trigger)
+           return trigger.unit == "nameplate"
+         end
       },
       {
         name = "sourceUnit",
