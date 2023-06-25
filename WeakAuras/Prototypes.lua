@@ -2527,6 +2527,7 @@ Private.event_prototypes = {
         ]=];
       else
         local ret2 = [=[
+          print("ret2", charges, trackedCharge)
           local trackedCharge = %s
           if (charges < trackedCharge) then
             if (state.value ~= duration) then
@@ -2576,8 +2577,8 @@ Private.event_prototypes = {
           if (expirationTime and expirationTime > 0) then
             remaining = expirationTime - GetTime();
             local remainingCheck = %s;
-            if(remainingModRate >= remainingCheck) then
-              Private.ExecEnv.ScheduleScan(expirationTime - remainingCheck);
+            if(remaining >= remainingCheck and remaining > 0) then
+              WeakAuras.ScheduleScan(expirationTime - remainingCheck);
             end
           end
         ]];
