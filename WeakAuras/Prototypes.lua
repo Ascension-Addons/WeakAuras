@@ -759,19 +759,10 @@ function WeakAuras.IsSpecActive(specID)
   return CA_GetActiveSpecId() + 1 == specID
 end
 
-function WeakAuras.IsMysticEnchantApplied(enchantID)
-  enchantID = enchantID and tonumber(enchantID)
-  if not enchantID then return false end
-  for i = INVSLOT_FIRST_EQUIPPED, INVSLOT_LAST_EQUIPPED do
-    local slotEnchantID = GetREInSlot(255, i)
-    if slotEnchantID and slotEnchantID > 0 then
-      local enchant = GetMysticEnchantInfo(slotEnchantID)
-      if enchant and enchant.spellID == enchantID then
-        return true
-      end
-    end
-  end
-  return false
+function WeakAuras.IsMysticEnchantApplied(spellID)
+  spellID = spellID and tonumber(spellID)
+  if not spellID then return false end
+  return MysticEnchantUtil.IsEnchantApplied(spellID)
 end
 
 Private.load_prototype = {
@@ -932,7 +923,7 @@ Private.load_prototype = {
       display = L["Mystic Enchant"],
       type = "mysticenchant",
       test = "WeakAuras.IsMysticEnchantApplied(%s)",
-      events = {"ASCENSION_CA_RE_PRESET_CHANGED", "ASCENSION_REFORGE_ENCHANT_RESULT", "PLAYER_EQUIPMENT_CHANGED", "SPELLS_CHANGED"},
+      events = {"MYSTIC_ENCHANT_PRESET_SET_ACTIVE_RESULT", "MYSTIC_ENCHANT_SLOT_UPDATE", "PLAYER_EQUIPMENT_CHANGED", "SPELLS_CHANGED"},
       showExactOption = true,
     },
     {
