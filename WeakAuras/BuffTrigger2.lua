@@ -103,7 +103,12 @@ local matchDataByTrigger = {}
 
 local matchDataChanged = {}
 
+local nameplateExists = {}
+
 local function UnitExistsFixed(unit)
+  if #unit > 9 and unit:sub(1, 9) == "nameplate" then
+    return nameplateExists[unit] or false
+  end
   return UnitExists(unit) or UnitGUID(unit)
 end
 
@@ -1555,6 +1560,14 @@ end
 
 local function ScanUnit(time, arg1)
   if not arg1 then return end
+  -- we have to scan nameplates since unit events arent sent for nameplate units
+  local isNameplate = arg1:sub(1, 9) == "nameplate"
+  if arg1 ~= "player" and not isNameplate then
+    local nameplate = GetNamePlateForUnit(arg1)
+    if nameplate and nameplate._unit then
+      ScanGroupUnit(time, matchDataChanged, "nameplate", nameplate._unit)
+    end
+  end
   if (Private.multiUnitUnits.raid[arg1] and IsInRaid()) then
     ScanGroupUnit(time, matchDataChanged, "group", arg1)
   elseif (Private.multiUnitUnits.party[arg1] and not IsInRaid()) then
@@ -1563,13 +1576,9 @@ local function ScanUnit(time, arg1)
     ScanGroupUnit(time, matchDataChanged, "boss", arg1)
   elseif Private.multiUnitUnits.arena[arg1] then
     ScanGroupUnit(time, matchDataChanged, "arena", arg1)
+  elseif isNameplate then
+    ScanGroupUnit(time, matchDataChanged, "nameplate", arg1)
   else
-    if arg1 ~= "player" then
-      local nameplate = GetNamePlateForUnit(arg1)
-      if nameplate and nameplate._unit then
-        ScanGroupUnit(time, matchDataChanged, "nameplate", nameplate._unit)
-      end
-    end
     ScanGroupUnit(time, matchDataChanged, nil, arg1)
   end
 end
@@ -1709,8 +1718,10 @@ local function EventHandler(frame, event, arg1, arg2, ...)
       end
     end
   elseif event == "NAME_PLATE_UNIT_ADDED" then
+    nameplateExists[arg1] = UnitGUID(arg1)
     RecheckActiveForUnitType("nameplate", arg1, deactivatedTriggerInfos)
   elseif event == "NAME_PLATE_UNIT_REMOVED" then
+    nameplateExists[arg1] = nil
     RecheckActiveForUnitType("nameplate", arg1, deactivatedTriggerInfos)
     tinsert(unitsToRemove, arg1)
   elseif event == "INSTANCE_ENCOUNTER_ENGAGE_UNIT" then
@@ -1781,12 +1792,8 @@ frame:RegisterEvent("PARTY_MEMBERS_CHANGED")
 frame:RegisterEvent("RAID_ROSTER_UPDATE")
 frame:RegisterEvent("INSTANCE_ENCOUNTER_ENGAGE_UNIT")
 frame:RegisterEvent("PLAYER_ENTERING_WORLD")
-frame:HookEvent("NAME_PLATE_UNIT_ADDED", function(unit)
-  EventHandler(frame, "NAME_PLATE_UNIT_ADDED", unit)
-end)
-frame:HookEvent("NAME_PLATE_UNIT_REMOVED", function(unit)
-  EventHandler(frame, "NAME_PLATE_UNIT_REMOVED", unit)
-end)
+frame:RegisterEvent("NAME_PLATE_UNIT_ADDED")
+frame:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
 frame:SetScript("OnEvent", EventHandler)
 
 frame:SetScript("OnUpdate", function()
@@ -2847,11 +2854,13 @@ local pendingTracks = {}
 
 local unitToGuid = {}
 local guidToUnit = {}
+local guidToNameplate = {}
 
 local function ReleaseUID(unit)
   local guid = unitToGuid[unit]
   if guid then
     guidToUnit[guid][unit] = nil
+    guidToNameplate[guid] = nil
   end
 end
 
@@ -2869,7 +2878,7 @@ local function GetUnit(guid)
   end
   for unit in pairs(guidToUnit[guid]) do
     if UnitGUID(unit) == guid then
-      return unit
+      return unit, unit ~= guidToNameplate[guid] and guidToNameplate[guid]
     else
       guidToUnit[guid][unit] = nil
     end
@@ -2885,7 +2894,9 @@ local function TrackUid(unit)
     ReleaseUID(unit)
   end
 
-  if unit:sub(1, 9) == "nameplate" then return end -- nameplate doesnt support target
+  if unit:sub(1, 9) == "nameplate" then
+    guidToNameplate[GUID] = unit
+  end
 
   unit = unit.."target"
   GUID = UnitGUID(unit)
@@ -3133,21 +3144,18 @@ end
 
 local function HandleCombatLog(scanFuncsName, scanFuncsSpellId, filter, event, sourceGUID, sourceName, destGUID, destName, spellId, spellName, amount)
   local time = GetTime()
-  local unit = GetUnit(destGUID)
-  if unit and unit:sub(1, 9) == "nameplate" then
-    ScanGroupUnit(time, matchDataChanged, "nameplate", unit)
-    return
-  end
+  local unit, nameplateUnit = GetUnit(destGUID)
   if scanFuncsName and scanFuncsName[spellName] or scanFuncsSpellId and scanFuncsSpellId[spellId] then
     ScheduleMultiCleanUp(destGUID, time + 60)
     matchDataMulti[destGUID] = matchDataMulti[destGUID] or {}
 
     if scanFuncsSpellId and scanFuncsSpellId[spellId] then
-      dprint("Scan SpellID")
       local updatedSpellId = UpdateMatchDataMulti(time, matchDataMulti[destGUID], spellId, event, sourceGUID, sourceName, destGUID, destName, spellId, spellName, amount)
       if unit then
-        dprint("Update Unit Spell ID", unit)
         updatedSpellId = AugmentMatchDataMulti(matchDataMulti[destGUID][spellId][sourceGUID], unit, filter, sourceGUID, nil, spellId) or updatedSpellId
+        if nameplateUnit then
+          ScanGroupUnit(time, matchDataChanged, "nameplate", nameplateUnit)
+        end
       else
         pendingTracks[destGUID] = true
       end
@@ -3161,11 +3169,12 @@ local function HandleCombatLog(scanFuncsName, scanFuncsSpellId, filter, event, s
     end
 
     if scanFuncsName and scanFuncsName[spellName] then
-      dprint("Scan SpellName")
       local updatedName = UpdateMatchDataMulti(time, matchDataMulti[destGUID], spellName, event, sourceGUID, sourceName, destGUID, destName, spellId, spellName, amount)
       if unit then
-        dprint("Update Unit Spell Name", unit)
         updatedName = AugmentMatchDataMulti(matchDataMulti[destGUID][spellName][sourceGUID], unit, filter, sourceGUID, spellName, nil) or updatedName
+        if nameplateUnit then
+          ScanGroupUnit(time, matchDataChanged, "nameplate", nameplateUnit)
+        end
       else
         pendingTracks[destGUID] = true
       end
@@ -3181,9 +3190,9 @@ local function HandleCombatLog(scanFuncsName, scanFuncsSpellId, filter, event, s
 end
 
 local function HandleCombatLogRemove(scanFuncsName, scanFuncsSpellId, sourceGUID, destGUID, spellId, spellName)
-  local unit = GetUnit(destGUID)
-  if unit and unit:sub(1, 9) == "nameplate" then
-    ScanGroupUnit(GetTime(), matchDataChanged, "nameplate", unit)
+  local _, nameplateUnit = GetUnit(destGUID)
+  if nameplateUnit then
+    ScanGroupUnit(GetTime(), matchDataChanged, "nameplate", nameplateUnit)
     return
   end
   if scanFuncsName and scanFuncsName[spellName] or scanFuncsSpellId and scanFuncsSpellId[spellId] then
@@ -3270,12 +3279,8 @@ function BuffTrigger.InitMultiAura()
     multiAuraFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
 	  multiAuraFrame:RegisterEvent("PLAYER_FOCUS_CHANGED")
     multiAuraFrame:RegisterEvent("PLAYER_LEAVING_WORLD")
-    multiAuraFrame:HookEvent("NAME_PLATE_UNIT_ADDED", function(unit)
-      BuffTrigger.HandleMultiEvent(multiAuraFrame, "NAME_PLATE_UNIT_ADDED", unit)
-    end)
-    multiAuraFrame:HookEvent("NAME_PLATE_UNIT_REMOVED", function(unit)
-      BuffTrigger.HandleMultiEvent(multiAuraFrame, "NAME_PLATE_UNIT_REMOVED", unit)
-    end)
+    multiAuraFrame:RegisterEvent("NAME_PLATE_UNIT_ADDED")
+    multiAuraFrame:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
     multiAuraFrame:SetScript("OnEvent", BuffTrigger.HandleMultiEvent)
     WeakAuras.frames["Multi-target 2 Aura Trigger Handler"] = multiAuraFrame
   end

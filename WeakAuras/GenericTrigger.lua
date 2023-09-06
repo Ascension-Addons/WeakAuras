@@ -892,12 +892,10 @@ function HandleEvent(frame, event, arg1, arg2, ...)
 end
 
 function HandleUnitEvent(frame, event, unit, ...)
-  if frame.unit ~= unit then return end
+  if not frame.unit or not unit or not UnitIsUnit(unit, frame.unit) then return end
   Private.StartProfileSystem("generictrigger " .. event .. " " .. unit);
   if not(WeakAuras.IsPaused()) then
-    if (UnitIsUnit(unit, frame.unit)) then
-      WeakAuras.ScanUnitEvents(event, frame.unit, ...);
-    end
+    WeakAuras.ScanUnitEvents(event, frame.unit, ...);
   end
   Private.StopProfileSystem("generictrigger " .. event .. " " .. unit);
 end
