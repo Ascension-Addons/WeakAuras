@@ -40,7 +40,7 @@ License: Public Domain
 --
 -- @class file
 -- @name LibRangeCheck-2.0
-local MAJOR_VERSION = "LibRangeCheck-2.0"
+local MAJOR_VERSION = "LibRangeCheck-Ascension-2.0"
 local MINOR_VERSION = tonumber(("$Revision: 98 $"):match("%d+")) + 100000
 
 local lib, oldminor = LibStub:NewLibrary(MAJOR_VERSION, MINOR_VERSION)
@@ -488,9 +488,11 @@ local function createCheckerList(spellList, itemList, interactList)
     if itemList then
         for range, items in pairs(itemList) do
             for i = 1, #items do
-                local item = items[i]
-                if GetItemInfo(item) then
-                    addChecker(res, range, nil, checkers_Item[item])
+                if GetItemInfoInstant(items[i]) then
+                    local itemObj = Item:CreateFromID(items[1])
+                    itemObj:ContinueOnLoad(function(itemID)
+                        addChecker(res, range, nil, checkers_Item[itemID])
+                    end)
                     break
                 end
             end
@@ -499,7 +501,7 @@ local function createCheckerList(spellList, itemList, interactList)
     
     if interactList and not next(res) then
         for index, range in pairs(interactList) do
-            addChecker(res, range, nil,  checkers_Interact[index])
+            addChecker(res, range, nil, checkers_Interact[index])
         end
     end
 
@@ -527,8 +529,6 @@ local function getRange(unit, checkerList)
                 max = rc.range
             elseif min > rc.range then
                 return min, max
-            else
-                return rc.range, max
             end
         end
     end
