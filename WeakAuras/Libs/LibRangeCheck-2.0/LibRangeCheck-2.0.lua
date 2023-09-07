@@ -255,9 +255,6 @@ local FriendItems  = {
         32825, -- Soul Cannon
         37887, -- Seeds of Nature's Wrath
     },
-    [80] = {
-        35278, -- Reinforced Net
-    },
 }
 
 local HarmItems = {
@@ -301,19 +298,26 @@ local HarmItems = {
         32825, -- Soul Cannon
         37887, -- Seeds of Nature's Wrath
     },
-    [80] = {
-        35278, -- Reinforced Net
-    },
 }
-
+local _, class = UnitClass("player")
+if not FriendSpells[class] then
+    FriendSpells[class] = {}
+end
 -- This could've been done by checking player race as well and creating tables for those, but it's easier like this
 for k, v in pairs(FriendSpells) do
     tinsert(v, 28880) -- ["Gift of the Naaru"]
 end
+
+if not HarmSpells[class] then
+    HarmSpells[class] = {}
+end
 for k, v in pairs(HarmSpells) do
     tinsert(v, 28734) -- ["Mana Tap"]
+    for range = 12, 60 do
+        local sid = 200100 + range
+        tinsert(v, sid)
+    end
 end
-
 -- >> END OF STATIC CONFIG
 
 -- cache
@@ -491,9 +495,10 @@ local function createCheckerList(spellList, itemList, interactList)
                 if GetItemInfoInstant(items[i]) then
                     local itemObj = Item:CreateFromID(items[1])
                     itemObj:ContinueOnLoad(function(itemID)
-                        addChecker(res, range, nil, checkers_Item[itemID])
+                        if GetItemInfo(items[i]) then
+                            addChecker(res, range, nil, checkers_Item[itemID])
+                        end
                     end)
-                    break
                 end
             end
         end
@@ -510,7 +515,7 @@ end
 
 -- returns minRange, maxRange  or nil
 local function getRange(unit, checkerList)
-    local min, max = 0, nil
+    local min, max = 1, nil
     for i = 1, #checkerList do
         local rc = checkerList[i]
         if not max or max > rc.range then
@@ -529,6 +534,8 @@ local function getRange(unit, checkerList)
                 max = rc.range
             elseif min > rc.range then
                 return min, max
+            else
+                return rc.range, max
             end
         end
     end
