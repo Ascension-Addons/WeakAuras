@@ -2518,7 +2518,6 @@ Private.event_prototypes = {
         ]=];
       else
         local ret2 = [=[
-          print("ret2", charges, trackedCharge)
           local trackedCharge = %s
           if (charges < trackedCharge) then
             if (state.value ~= duration) then
@@ -2626,6 +2625,16 @@ Private.event_prototypes = {
           end
         end,
         type = "collapse",
+      },
+      {
+        name = "track",
+        display = L["Track Cooldowns"],
+        type = "select",
+        values = "cooldown_types",
+        collapse = "extra Cooldown Progress (Spell)",
+        test = "true",
+        required = true,
+        default = "auto"
       },
       {
         name = "showgcd",

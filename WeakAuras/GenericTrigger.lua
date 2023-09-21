@@ -1960,7 +1960,7 @@ do
   function WeakAuras.GetSpellCooldown(id, ignoreRuneCD, showgcd, track)
     local startTime, duration, gcdCooldown, readyTime
     if track == "charges" then
-      startTime, duration, readyTime, modRate = spellCdsCharges:FetchSpellCooldown(id)
+      startTime, duration, readyTime = spellCdsCharges:FetchSpellCooldown(id)
     else
       if (ignoreRuneCD) then
         startTime, duration, readyTime = spellCdsRune:FetchSpellCooldown(id)

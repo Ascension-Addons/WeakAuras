@@ -1368,7 +1368,8 @@ loadFrame:RegisterEvent("PLAYER_TALENT_UPDATE");
 loadFrame:RegisterEvent("SPELL_UPDATE_USABLE");
 loadFrame:RegisterEvent("PLAYER_DIFFICULTY_CHANGED");
 loadFrame:RegisterEvent("VEHICLE_UPDATE");
-
+loadFrame:RegisterEvent("MYSTIC_ENCHANT_SLOT_UPDATE");
+loadFrame:RegisterEvent("MYSTIC_ENCHANT_PRESET_SET_ACTIVE_RESULT");
 loadFrame:RegisterEvent("PARTY_MEMBERS_CHANGED");
 loadFrame:RegisterEvent("RAID_ROSTER_UPDATE");
 loadFrame:RegisterEvent("ZONE_CHANGED");
