@@ -5879,7 +5879,7 @@ Private.event_prototypes = {
       },
 	  {
         name = "defensevalue",
-        display = L["defense Value"],
+        display = L["Defense Value"],
         type = "number",
         init = "UnitDefense('player')",
         store = true,
@@ -5887,7 +5887,7 @@ Private.event_prototypes = {
       },
       {
         name = "defensepercent",
-        display = L["defense (%)"],
+        display = L["Defense (%)"],
         type = "number",
         init = "0.04 * ( UnitDefense('player') + select(2,UnitDefense('player') ) - UnitLevel('player')*5 )",
         store = true,
