@@ -5877,6 +5877,22 @@ Private.event_prototypes = {
         store = true,
         conditionType = "number"
       },
+	  {
+        name = "defensevalue",
+        display = L["Defense Value"],
+        type = "number",
+        init = "UnitDefense('player')",
+        store = true,
+        conditionType = "number"
+      },
+      {
+        name = "defensepercent",
+        display = L["Defense (%)"],
+        type = "number",
+        init = "0.04 * ( UnitDefense('player') + select(2,UnitDefense('player') ) - UnitLevel('player')*5 )",
+        store = true,
+        conditionType = "number"
+      },
       {
         name = "dodgerating",
         display = L["Dodge Rating"],
@@ -5925,11 +5941,27 @@ Private.event_prototypes = {
         store = true,
         conditionType = "number"
       },
+	  {
+        name = "blockvalue",
+        display = L["Block Value"],
+        type = "number",
+        init = "GetShieldBlock()",
+        store = true,
+        conditionType = "number"
+      },
       {
         name = "armorrating",
         display = L["Armor Rating"],
         type = "number",
         init = "select(2, UnitArmor('player'))",
+        store = true,
+        conditionType = "number"
+      },
+	  {
+        name = "avoidancetotalpercent",
+        display = L["Total Avoidance (%)"],
+        type = "number",
+        init = "0.04 * ( UnitDefense('player') + select(2,UnitDefense('player') ) - UnitLevel('player')*5 ) + GetDodgeChance() + GetParryChance() + GetBlockChance()",
         store = true,
         conditionType = "number"
       },
