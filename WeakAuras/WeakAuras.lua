@@ -1276,7 +1276,7 @@ local function scanForLoadsImpl(toCheck, event, arg1, ...)
   local size, difficulty, instanceType = GetInstanceTypeAndSize()
   local group = WeakAuras.GroupType()
   local ruleset = WeakAuras.Ruleset()
-  local specialization = CA_GetActiveSpecId() + 1
+  local specialization = SpecializationUtil.GetActiveSpecialization()
 
   local changed = 0;
   local shouldBeLoaded, couldBeLoaded;

@@ -756,7 +756,7 @@ end
 function WeakAuras.IsSpecActive(specID)
   specID = specID and tonumber(specID)
   if not specID then return false end
-  return CA_GetActiveSpecId() + 1 == specID
+  return SpecializationUtil.GetActiveSpecialization() == specID
 end
 
 function WeakAuras.IsMysticEnchantApplied(spellID)
