@@ -762,7 +762,7 @@ end
 function WeakAuras.IsMysticEnchantApplied(spellID)
   spellID = spellID and tonumber(spellID)
   if not spellID then return false end
-  return MysticEnchantUtil.IsEnchantApplied(spellID)
+  return MysticEnchantUtil.IsEnchantApplied("player", spellID)
 end
 
 Private.load_prototype = {
