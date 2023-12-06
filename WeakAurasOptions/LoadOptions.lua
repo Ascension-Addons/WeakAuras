@@ -102,7 +102,7 @@ local function CorrectMysticEnchantName(input)
     end
     local name
     for i = 1, NUM_MYSTIC_ENCHANT_SLOTS do
-      local spellID = C_MysticEnchant.GetAppliedEnchant(i)
+      local spellID = C_MysticEnchant.GetAppliedEnchant("player", i)
       if spellID then
         name = GetSpellInfo(spellID)
         if name and name:upper() == input:upper() then
@@ -656,7 +656,7 @@ function OptionsPrivate.ConstructOptions(prototype, data, startorder, triggernum
                     return name;
                   end
                   for i = 1, NUM_MYSTIC_ENCHANT_SLOTS do
-                    local spellID = C_MysticEnchant.GetAppliedEnchant(i)
+                    local spellID = C_MysticEnchant.GetAppliedEnchant("player", i)
                     if spellID then
                       name = GetSpellInfo(spellID)
                       if name and name:upper() == trigger[realname]:upper() then
