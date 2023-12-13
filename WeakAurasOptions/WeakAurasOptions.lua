@@ -189,9 +189,7 @@ loadedFrame:SetScript("OnEvent", function(self, event, addon)
     if(addon == ADDON_NAME) then
       db = WeakAurasSaved;
       WeakAurasOptionsSaved = WeakAurasOptionsSaved or {};
-
       odb = WeakAurasOptionsSaved;
-
       -- Remove icon and id cache (replaced with spellCache)
       if (odb.iconCache) then
         odb.iconCache = nil;
