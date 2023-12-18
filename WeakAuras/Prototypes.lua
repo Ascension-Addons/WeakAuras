@@ -802,6 +802,14 @@ Private.load_prototype = {
       init = "false",
     },
     {
+      name = "manastorm",
+      display = L["In Manastorm"],
+      type = "toggle",
+      init = "arg",
+      width = WeakAuras.normalWidth,
+      events = {"ACTIVE_MANASTORM_UPDATED"}
+    },
+    {
       name = "vehicle",
       display = L["In Vehicle"],
       type = "tristate",
