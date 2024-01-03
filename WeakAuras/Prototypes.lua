@@ -807,7 +807,7 @@ Private.load_prototype = {
       type = "toggle",
       init = "arg",
       width = WeakAuras.normalWidth,
-      events = {"ACTIVE_MANASTORM_UPDATED"}
+      events = {"ACTIVE_MANASTORM_UPDATED", "ZONE_CHANGED_NEW_AREA", "ZONE_CHANGED"}
     },
     {
       name = "vehicle",
@@ -6155,6 +6155,13 @@ Private.event_prototypes = {
         type = "multiselect",
         values = "difficulty_types",
         init = "WeakAuras.InstanceDifficulty()"
+      },
+      {
+        name = "manastorm",
+        display = L["In Manastorm"],
+        type = "tristate",
+        init = "C_Manastorm.IsInManastorm()",
+        events = {"ACTIVE_MANASTORM_UPDATED","ZONE_CHANGED_NEW_AREA","ZONE_CHANGED"}
       },
     },
     automaticrequired = true
