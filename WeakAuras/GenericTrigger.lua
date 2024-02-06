@@ -3077,12 +3077,16 @@ end
 do
   local mh = GetInventorySlotInfo("MainHandSlot")
   local oh = GetInventorySlotInfo("SecondaryHandSlot")
+  local ranged = GetInventorySlotInfo("RangedSlot")
 
   local mh_name, mh_shortenedName, mh_exp, mh_dur, mh_charges;
   local mh_icon = GetInventoryItemTexture("player", mh);
 
   local oh_name, oh_shortenedName, oh_exp, oh_dur, oh_charges;
   local oh_icon = GetInventoryItemTexture("player", oh);
+
+  local ranged_name, ranged_shortenedName, ranged_exp, ranged_dur, ranged_charges;
+  local ranged_icon = GetInventoryItemTexture("player", ranged);
 
   local tenchFrame = nil
   WeakAuras.frames["Temporary Enchant Handler"] = tenchFrame;
@@ -3115,11 +3119,13 @@ do
 
       local function tenchUpdate()
         Private.StartProfileSystem("generictrigger");
-        local _, mh_rem, oh_rem
+        local _, mh_rem, oh_rem, ranged_rem
         _, mh_rem, mh_charges, _, oh_rem, oh_charges = GetWeaponEnchantInfo();
+        _, ranged_rem, ranged_charges = GetRangedWeaponEnchantInfo()
         local time = GetTime();
         local mh_exp_new = mh_rem and (time + (mh_rem / 1000));
         local oh_exp_new = oh_rem and (time + (oh_rem / 1000));
+        local ranged_exp_new = ranged_rem and (time + (ranged_rem / 1000));
         if(math.abs((mh_exp or 0) - (mh_exp_new or 0)) > 1) then
           mh_exp = mh_exp_new;
           mh_dur = mh_rem and mh_rem / 1000;
@@ -3139,6 +3145,16 @@ do
             oh_name, oh_shortenedName = "None", "None"
           end
           oh_icon = GetInventoryItemTexture("player", oh)
+        end
+        if(math.abs((ranged_exp or 0) - (ranged_exp_new or 0)) > 1) then
+          ranged_exp = ranged_exp_new;
+          ranged_dur = ranged_rem and ranged_rem / 1000;
+          if ranged_exp then
+            ranged_name, ranged_shortenedName = getTenchName(ranged)
+          else
+            ranged_name, ranged_shortenedName = "None", "None"
+          end
+          ranged_icon = GetInventoryItemTexture("player", ranged)
         end
         WeakAuras.ScanEvents("TENCH_UPDATE");
         Private.StopProfileSystem("generictrigger");
@@ -3162,6 +3178,10 @@ do
 
   function WeakAuras.GetOHTenchInfo()
     return oh_exp, oh_dur, oh_name, oh_shortenedName, oh_icon, oh_charges;
+  end
+
+  function WeakAuras.GetRangedTenchInfo()
+    return ranged_exp, ranged_dur, ranged_name, ranged_shortenedName, ranged_icon, ranged_charges;
   end
 end
 

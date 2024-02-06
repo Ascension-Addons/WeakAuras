@@ -4628,6 +4628,8 @@ Private.event_prototypes = {
 
         if triggerWeaponType == "main" then
           expirationTime, duration, name, shortenedName, icon, stacks = WeakAuras.GetMHTenchInfo()
+        elseif triggerWeaponType == "ranged" then
+          expirationTime, duration, name, shortenedName, icon, stacks = WeakAuras.GetRangedTenchInfo()
         else
           expirationTime, duration, name, shortenedName, icon, stacks = WeakAuras.GetOHTenchInfo()
         end
