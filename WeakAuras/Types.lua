@@ -2287,6 +2287,11 @@ Private.bool_types = {
   [1] = L["True"]
 }
 
+Private.absorb_modes = {
+  OVERLAY_FROM_START = L["Attach to Start"],
+  OVERLAY_FROM_END = L["Attach to End"]
+}
+
 Private.update_categories = {
   {
     name = "anchor",
