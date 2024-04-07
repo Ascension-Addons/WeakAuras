@@ -31,11 +31,13 @@ function spellCache.Build()
   local co = coroutine.create(function()
     local id = 0
     local misses = 0
-    while misses < 100000 do
+    SendSystemMessage("WeakAuras: Caching Spell Icons. Your game may lag for a minute or more...")
+    
+    while misses < 5000 do
       id = id + 1
       local name, _, icon = GetSpellInfo(id)
 
-      if(icon == 136243) then -- 136243 is the a gear icon, we can ignore those spells
+      if(icon == "Interface\\Icons\\trade_engineering") then -- 136243 is the a gear icon, we can ignore those spells
         misses = 0;
       elseif name and name ~= "" and icon then
         cache[name] = cache[name] or {}
@@ -51,6 +53,8 @@ function spellCache.Build()
       end
       coroutine.yield()
     end
+
+    SendSystemMessage("WeakAuras: Finished Caching Spell Icons.")
 
     for _, category in pairs(GetCategoryList()) do
       local total = GetCategoryNumAchievements(category, true)
