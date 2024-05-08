@@ -6378,11 +6378,11 @@ Private.event_prototypes = {
       WeakAuras.WatchQueuedAction()
     end,
     init = function(trigger)
-      trigger.spellName = trigger.spellName or 0
+      trigger.spellId = trigger.spellId or 0
       local ret = [=[
         local button = WeakAuras.FindSpellActionButtons(%d)
       ]=]
-      return ret:format(trigger.spellName)
+      return ret:format(trigger.spellId)
     end,
     args = {
       {
