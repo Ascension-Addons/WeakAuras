@@ -12,5 +12,6 @@
 ## DefaultState: Enabled
 ## LoadOnDemand: 1
 ## Dependencies: WeakAuras, WeakAurasOptions
+## X-IconTexture: Interface\AddOns\WeakAuras\Media\WeakAurasLogo
 
 ModelPaths.lua

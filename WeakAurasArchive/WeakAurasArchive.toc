@@ -3,5 +3,6 @@
 ## LoadOnDemand: 1
 ## SavedVariables: WeakAurasArchive
 ## Dependencies: WeakAuras
+## X-IconTexture: Interface\AddOns\WeakAuras\Media\WeakAurasLogo
 
 WeakAurasArchive.lua

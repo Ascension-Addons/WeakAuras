@@ -13,6 +13,7 @@
 ## LoadOnDemand: 1
 ## Dependencies: WeakAuras
 ## SavedVariables: WeakAurasOptionsSaved
+## X-IconTexture: Interface\AddOns\WeakAuras\Media\WeakAurasLogo
 
 locales.xml
 
