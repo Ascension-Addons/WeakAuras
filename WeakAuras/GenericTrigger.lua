@@ -2155,6 +2155,9 @@ do
       if duration and duration <= 1.5 or (duration == gcdDuration and startTime == gcdStart) then
         startTime, duration = startTimeCharges, durationCharges
       end
+
+      durationCooldown = durationCharges
+      startTimeCooldown = startTimeCharges
     end
 
     return charges, maxCharges, startTime, duration,
