@@ -1372,6 +1372,7 @@ loadFrame:RegisterEvent("VEHICLE_UPDATE");
 loadFrame:RegisterEvent("MYSTIC_ENCHANT_SLOT_UPDATE");
 loadFrame:RegisterEvent("MYSTIC_ENCHANT_PRESET_SET_ACTIVE_RESULT");
 loadFrame:RegisterEvent("ASCENSION_CA_SPECIALIZATION_ACTIVE_ID_CHANGED");
+loadFrame:RegisterEvent("ACTIVE_MANASTORM_UPDATED");
 loadFrame:RegisterEvent("ASCENSION_HIDDEN_SPELL_LEARNED");
 loadFrame:RegisterEvent("ASCENSION_HIDDEN_SPELL_UNLEARNED");
 loadFrame:RegisterEvent("PARTY_MEMBERS_CHANGED");
