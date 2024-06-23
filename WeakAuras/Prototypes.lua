@@ -886,6 +886,7 @@ Private.load_prototype = {
       type = "multiselect",
       values = "specialization_types",
       test = "WeakAuras.IsSpecActive(%s)",
+      events = {"ASCENSION_CA_SPECIALIZATION_ACTIVE_ID_CHANGED"},
       init = "arg"
     },
     {
