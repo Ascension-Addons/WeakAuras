@@ -33,10 +33,12 @@ function spellCache.Build()
     local misses = 0
     SendSystemMessage("WeakAuras: Caching Spell Icons. Your game may lag for a minute or more...")
     
-    while misses < 5000 do
+    while misses < 100000 do
       id = id + 1
+      if id > 1000000 then
+        break
+      end
       local name, _, icon = GetSpellInfo(id)
-
       if(icon == "Interface\\Icons\\trade_engineering") then -- 136243 is the a gear icon, we can ignore those spells
         misses = 0;
       elseif name and name ~= "" and icon then
