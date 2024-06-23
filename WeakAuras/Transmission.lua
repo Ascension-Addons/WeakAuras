@@ -212,7 +212,7 @@ local receivedData;
 
 hooksecurefunc("SetItemRef", function(link, text)
   if(link == "BNplayer::weakauras") then
-    local _, _, characterName, displayName = text:find("|HBNplayer::weakauras|h|cFF8800FF%[([^%s]+) |r|cFF8800FF%- ([^%]]+)%]|h");
+    local _, _, characterName, displayName = text:find("|HBNplayer::weakauras|h|cFF8800FF%[([^%s]+) |r|cFF8800FF%- (.*)%]|h");
     if(characterName and displayName) then
       characterName = characterName:gsub("|c[Ff][Ff]......", ""):gsub("|r", "");
       displayName = displayName:gsub("|c[Ff][Ff]......", ""):gsub("|r", "");
