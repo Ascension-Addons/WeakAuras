@@ -804,7 +804,7 @@ Private.load_prototype = {
     {
       name = "manastorm",
       display = L["In Manastorm"],
-      type = "toggle",
+      type = "tristate",
       init = "arg",
       width = WeakAuras.normalWidth,
       events = {"ACTIVE_MANASTORM_UPDATED", "ZONE_CHANGED_NEW_AREA", "ZONE_CHANGED"}
