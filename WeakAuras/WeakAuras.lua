@@ -1278,6 +1278,7 @@ local function scanForLoadsImpl(toCheck, event, arg1, ...)
   local ruleset = WeakAuras.Ruleset()
   local specialization = SpecializationUtil.GetActiveSpecialization()
   local manastorm = C_Manastorm.IsInManastorm()
+  local bossEncounter = WeakAuras.BossEncounter(arg2)
 
   local changed = 0;
   local shouldBeLoaded, couldBeLoaded;
@@ -1290,8 +1291,8 @@ local function scanForLoadsImpl(toCheck, event, arg1, ...)
     if (data and not data.controlledChildren) then
       local loadFunc = loadFuncs[id];
       local loadOpt = loadFuncsForOptions[id];
-      shouldBeLoaded = loadFunc and loadFunc("ScanForLoads_Auras", inCombat, alive, pvp, manastorm, vehicle, vehicleUi, group, ruleset, player, realm, class, specialization, faction, playerLevel, zone, zoneId, size, difficulty);
-      couldBeLoaded =  loadOpt and loadOpt("ScanForLoads_Auras",   inCombat, alive, pvp, manastorm, vehicle, vehicleUi, group, ruleset, player, realm, class, specialization, faction, playerLevel, zone, zoneId, size, difficulty);
+      shouldBeLoaded = loadFunc and loadFunc("ScanForLoads_Auras", inCombat, alive, pvp, manastorm, vehicle, vehicleUi, group, ruleset, player, realm, class, specialization, faction, playerLevel, zone, zoneId, size, difficulty, bossEncounter);
+      couldBeLoaded =  loadOpt and loadOpt("ScanForLoads_Auras",   inCombat, alive, pvp, manastorm, vehicle, vehicleUi, group, ruleset, player, realm, class, specialization, faction, playerLevel, zone, zoneId, size, difficulty, bossEncounter);
 
       if(shouldBeLoaded and not loaded[id]) then
         changed = changed + 1;
@@ -1390,6 +1391,8 @@ loadFrame:RegisterEvent("PLAYER_DEAD")
 loadFrame:RegisterEvent("PLAYER_ALIVE")
 loadFrame:RegisterEvent("PLAYER_UNGHOST")
 loadFrame:RegisterEvent("PLAYER_FLAGS_CHANGED")
+loadFrame:RegisterEvent("ENCOUNTER_START")
+loadFrame:RegisterEvent("ENCOUNTER_END")
 
 local unitLoadFrame = CreateFrame("FRAME");
 WeakAuras.unitLoadFrame = unitLoadFrame;
@@ -4889,5 +4892,3 @@ do
     return coroutine.wrap(TraverseParents), data
   end
 end
-
-
