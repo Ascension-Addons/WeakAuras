@@ -591,6 +591,13 @@ function WeakAuras.CheckString(ids, currentId)
   return false;
 end
 
+function WeakAuras.BossEncounter(bosses)
+  if event == "ENCOUNTER_START" or event == "ENCOUNTER_END" then
+    return WeakAuras.CheckString(bosses, arg2)
+  end
+  return false
+end
+
 function WeakAuras.ValidateNumeric(info, val)
   if val ~= nil and val ~= "" and (not tonumber(val) or tonumber(val) >= 2^31) then
     return false;
@@ -992,6 +999,14 @@ Private.load_prototype = {
       type = "item",
       test = "IsEquippedItem(%s)",
       events = { "UNIT_INVENTORY_CHANGED", "PLAYER_EQUIPMENT_CHANGED"}
+    },
+    {
+      name = "bossEncounter",
+      display = L["Boss Encounter"],
+      type = "string",
+      test = "WeakAuras.BossEncounter(%q)",
+      events = {"ENCOUNTER_START", "ENCOUNTER_END"},
+      desc = L["Supports multiple entries, separated by commas"]
     }
   }
 };
@@ -6235,6 +6250,13 @@ Private.event_prototypes = {
         init = "C_Manastorm.IsInManastorm()",
         events = {"ACTIVE_MANASTORM_UPDATED","ZONE_CHANGED_NEW_AREA","ZONE_CHANGED"}
       },
+      {
+        name = "bossEncounter",
+        display = L["Boss Encounter"],
+        type = "string",
+        init = "WeakAuras.BossEncounter(%q)",
+        events = {"ENCOUNTER_START", "ENCOUNTER_END"}
+      }
     },
     automaticrequired = true
   },
