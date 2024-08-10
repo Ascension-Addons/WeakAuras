@@ -592,7 +592,7 @@ function WeakAuras.CheckString(ids, currentId)
 end
 
 function WeakAuras.BossEncounter(bosses)
-  if event == "ENCOUNTER_START" or event == "ENCOUNTER_END" then
+  if event == "ENCOUNTER_START" then -- Any time ENCOUNTER_END triggers this we want it to return false.
     return WeakAuras.CheckString(bosses, arg2)
   end
   return false
