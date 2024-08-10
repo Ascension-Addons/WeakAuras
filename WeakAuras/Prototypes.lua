@@ -6254,7 +6254,7 @@ Private.event_prototypes = {
         name = "bossEncounter",
         display = L["Boss Encounter"],
         type = "string",
-        init = "WeakAuras.BossEncounter(%q)",
+        init = "WeakAuras.BossEncounter()",
         events = {"ENCOUNTER_START", "ENCOUNTER_END"}
       }
     },
