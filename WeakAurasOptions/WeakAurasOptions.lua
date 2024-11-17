@@ -465,9 +465,6 @@ StaticPopupDialogs["WEAKAURAS_CONFIRM_DELETE"] = {
       OptionsPrivate.SortDisplayButtons(nil, true)
     end
   end,
-  OnCancel = function(self)
-    self.data = nil
-  end,
   showAlert = 1,
   whileDead = 1,
   timeout = 0,
