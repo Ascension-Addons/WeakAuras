@@ -470,7 +470,6 @@ StaticPopupDialogs["WEAKAURAS_CONFIRM_DELETE"] = {
   end,
   showAlert = 1,
   whileDead = 1,
-  timeout = 0,
   preferredindex = STATICPOPUP_NUMDIALOGS,
 }
 
